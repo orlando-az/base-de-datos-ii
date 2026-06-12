@@ -4,6 +4,9 @@
 
 [⬇️ Descargar backup](https://upds-my.sharepoint.com/:f:/g/personal/tj_orlando_aguilera_z_upds_net_bo/IgCvi_57xX07TZWFjlxdUzdxAeQ9ZsJdqkdXcfENv2TBNl0?e=Sd2Tjq)
 
+> Si el enlace no funciona, copia y pega esta URL en el navegador:
+> (https://upds-my.sharepoint.com/:f:/g/personal/tj_orlando_aguilera_z_upds_net_bo/IgCvi_57xX07TZWFjlxdUzdxAeQ9ZsJdqkdXcfENv2TBNl0?e=Sd2Tjq)
+
 ---
 
 ## Restauración en DBeaver
