@@ -1,0 +1,194 @@
+# AdventureWorks (PostgreSQL) — Ejercicios de Exploración
+
+Continuación de la exploración de las tablas principales de AdventureWorks.
+
+- **Parte 1:** Radiografía del esquema (resuelta).
+- **Parte 2:** Relaciones entre tablas (`humanresources`, `purchasing`, `production` — inventario y órdenes de trabajo), sin resolver.
+
+---
+
+## Parte 1 — Radiografía del esquema
+
+### Ejercicio 1 — Volumen de datos por tabla
+
+**Orden:** Listar las tablas de los esquemas `humanresources`, `purchasing` y `production`, junto con la cantidad aproximada de filas de cada una, para tener una idea del volumen de datos.
+
+**Campos sugeridos:** `esquema`, `tabla`, `filas_aproximadas`
+
+> **Nota:** `n_live_tup` se actualiza con `ANALYZE`/autovacuum. Si la base recién fue importada y los valores aparecen en 0, ejecutar primero: `ANALYZE;`
+
+```sql
+SELECT 
+    schemaname AS esquema,
+    relname AS tabla,
+    n_live_tup AS filas_aproximadas
+FROM pg_stat_user_tables
+WHERE schemaname IN ('humanresources', 'purchasing', 'production')
+ORDER BY filas_aproximadas DESC;
+```
+
+---
+
+### Ejercicio 2 — Estructura de una tabla
+
+**Orden:** Mostrar el nombre, tipo de dato, si permite nulos y la posición de cada columna de la tabla `humanresources.employee`, ordenadas según su posición original.
+
+**Campos sugeridos:** `columna`, `tipo_dato`, `es_nulable`, `posicion`
+
+```sql
+SELECT 
+    column_name AS columna,
+    data_type AS tipo_dato,
+    is_nullable AS es_nulable,
+    ordinal_position AS posicion
+FROM information_schema.columns
+WHERE table_schema = 'humanresources'
+  AND table_name = 'employee'
+ORDER BY ordinal_position;
+```
+
+---
+
+### Ejercicio 3 — Claves primarias por tabla
+
+**Orden:** Listar las claves primarias definidas en los esquemas `humanresources` y `purchasing`, mostrando el esquema, la tabla y la(s) columna(s) que forman la clave.
+
+**Campos sugeridos:** `esquema`, `tabla`, `columna_clave`
+
+```sql
+SELECT 
+    tc.table_schema AS esquema,
+    tc.table_name AS tabla,
+    kcu.column_name AS columna_clave
+FROM information_schema.table_constraints tc
+INNER JOIN information_schema.key_column_usage kcu
+    ON tc.constraint_name = kcu.constraint_name
+    AND tc.table_schema = kcu.table_schema
+WHERE tc.constraint_type = 'PRIMARY KEY'
+  AND tc.table_schema IN ('humanresources', 'purchasing')
+ORDER BY esquema, tabla;
+```
+
+---
+
+### Ejercicio 4 — Relaciones (foreign keys) de una tabla
+
+**Orden:** Mostrar todas las claves foráneas de la tabla `purchasing.purchaseorderheader`, indicando la columna de origen y la tabla/columna referenciada.
+
+**Campos sugeridos:** `columna_origen`, `tabla_referenciada`, `columna_referenciada`
+
+```sql
+SELECT 
+    kcu.column_name AS columna_origen,
+    ccu.table_schema || '.' || ccu.table_name AS tabla_referenciada,
+    ccu.column_name AS columna_referenciada
+FROM information_schema.table_constraints tc
+INNER JOIN information_schema.key_column_usage kcu
+    ON tc.constraint_name = kcu.constraint_name
+INNER JOIN information_schema.constraint_column_usage ccu
+    ON tc.constraint_name = ccu.constraint_name
+WHERE tc.constraint_type = 'FOREIGN KEY'
+  AND tc.table_schema = 'purchasing'
+  AND tc.table_name = 'purchaseorderheader';
+```
+
+---
+
+## Parte 2 — Relaciones entre tablas (sin resolver)
+
+### Ejercicio 5 — Empleados por departamento (grupo Manufacturing/QA)
+
+**Orden:** Mostrar el nombre completo, el puesto, el nombre del departamento y su grupo, considerando únicamente la asignación vigente (`enddate IS NULL`), y filtrando solo los departamentos cuyo grupo sea 'Manufacturing' o 'Quality Assurance'.
+
+**Campos sugeridos:** `person.firstname`, `person.lastname`, `employee.jobtitle`, `department.name`, `department.groupname`
+
+```sql
+-- Escribir consulta aquí
+```
+
+---
+
+### Ejercicio 6 — Empleados por turno, contratados desde 2010
+
+**Orden:** Contar la cantidad de empleados asignados actualmente a cada turno, considerando únicamente a los empleados cuya fecha de contratación sea posterior al 1 de enero de 2010.
+
+**Campos sugeridos:** `shift.name`, `COUNT(*)`
+**Filtro adicional sobre:** `employee.hiredate`
+
+```sql
+-- Escribir consulta aquí
+```
+
+---
+
+### Ejercicio 7 — Empleados con más de 15 años de antigüedad
+
+**Orden:** Mostrar el nombre, la fecha de contratación y la antigüedad en años de los empleados cuya antigüedad sea mayor a 15 años, ordenados de mayor a menor.
+
+**Campos sugeridos:** `person.firstname`, `person.lastname`, `employee.hiredate`, `AGE(CURRENT_DATE, employee.hiredate)`
+
+```sql
+-- Escribir consulta aquí
+```
+
+---
+
+### Ejercicio 8 — Proveedores preferidos con nombre específico
+
+**Orden:** Listar los proveedores activos cuya calificación de crédito sea 1 o 2, que además sean proveedores preferidos y cuyo nombre contenga la palabra 'Bike' o 'Sport'.
+
+**Campos sugeridos:** `vendor.businessentityid`, `vendor.name`, `vendor.creditrating`, `vendor.preferredvendorstatus`
+**Filtros adicionales sobre:** `vendor.activeflag`, `vendor.name`
+
+```sql
+-- Escribir consulta aquí
+```
+
+---
+
+### Ejercicio 9 — Productos con precio acordado superior a 500
+
+**Orden:** Mostrar el nombre del producto, el proveedor y el precio estándar acordado, únicamente para productos cuyo precio estándar sea mayor a 500.
+
+**Campos sugeridos:** `product.name`, `vendor.name`, `productvendor.standardprice`
+
+```sql
+-- Escribir consulta aquí
+```
+
+---
+
+### Ejercicio 10 — Gasto por proveedor entre 2013 y 2014
+
+**Orden:** Calcular la cantidad de órdenes de compra y el monto total por proveedor, considerando solo las órdenes realizadas entre el 1 de enero de 2013 y el 31 de diciembre de 2014, mostrando solo los proveedores con más de 5 órdenes en ese rango, ordenados por monto total descendente.
+
+**Campos sugeridos:** `vendor.name`, `COUNT(*)`, `SUM(purchaseorderheader.totaldue)`
+**Filtro adicional sobre:** `purchaseorderheader.orderdate`
+
+```sql
+-- Escribir consulta aquí
+```
+
+---
+
+### Ejercicio 11 — Inventario por ubicación con costo asociado
+
+**Orden:** Mostrar el total de unidades en inventario agrupado por ubicación, incluyendo el nombre y el costo de la ubicación, mostrando solo aquellas ubicaciones cuyo costo sea mayor a 0 y cuyo total de inventario supere las 5000 unidades.
+
+**Campos sugeridos:** `productinventory.locationid`, `location.name`, `location.costrate`, `SUM(productinventory.quantity)`
+
+```sql
+-- Escribir consulta aquí
+```
+
+---
+
+### Ejercicio 12 — Órdenes de trabajo retrasadas con alto volumen
+
+**Orden:** Listar las órdenes de trabajo cuya fecha de finalización sea posterior a la fecha de vencimiento y cuya cantidad ordenada sea mayor a 20, junto al nombre del producto correspondiente.
+
+**Campos sugeridos:** `workorder.workorderid`, `product.name`, `workorder.orderqty`, `workorder.duedate`, `workorder.enddate`
+
+```sql
+-- Escribir consulta aquí
+```
