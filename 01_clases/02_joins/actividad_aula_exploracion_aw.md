@@ -18,7 +18,7 @@ Continuación de la exploración de las tablas principales de AdventureWorks.
 > **Nota:** `n_live_tup` se actualiza con `ANALYZE`/autovacuum. Si la base recién fue importada y los valores aparecen en 0, ejecutar primero: `ANALYZE;`
 
 ```sql
-SELECT 
+SELECT
     schemaname AS esquema,
     relname AS tabla,
     n_live_tup AS filas_aproximadas
@@ -36,7 +36,7 @@ ORDER BY filas_aproximadas DESC;
 **Campos sugeridos:** `columna`, `tipo_dato`, `es_nulable`, `posicion`
 
 ```sql
-SELECT 
+SELECT
     column_name AS columna,
     data_type AS tipo_dato,
     is_nullable AS es_nulable,
@@ -56,7 +56,7 @@ ORDER BY ordinal_position;
 **Campos sugeridos:** `esquema`, `tabla`, `columna_clave`
 
 ```sql
-SELECT 
+SELECT
     tc.table_schema AS esquema,
     tc.table_name AS tabla,
     kcu.column_name AS columna_clave
@@ -78,7 +78,7 @@ ORDER BY esquema, tabla;
 **Campos sugeridos:** `columna_origen`, `tabla_referenciada`, `columna_referenciada`
 
 ```sql
-SELECT 
+SELECT
     kcu.column_name AS columna_origen,
     ccu.table_schema || '.' || ccu.table_name AS tabla_referenciada,
     ccu.column_name AS columna_referenciada
@@ -103,7 +103,16 @@ WHERE tc.constraint_type = 'FOREIGN KEY'
 **Campos sugeridos:** `person.firstname`, `person.lastname`, `employee.jobtitle`, `department.name`, `department.groupname`
 
 ```sql
--- Escribir consulta aquí
+select p.firstname ,p.lastname,e.jobtitle , d."name" as department,
+d.groupname , edh.enddate
+from humanresources.employee e
+inner join person.person p on e.businessentityid =p.businessentityid
+inner join humanresources.employeedepartmenthistory edh
+on edh.businessentityid = e.businessentityid
+inner join humanresources.department d
+on d.departmentid =edh.departmentid
+where edh.enddate is null and
+d.groupname in ('Manufacturing','Quality Assurance');
 ```
 
 ---
@@ -116,7 +125,15 @@ WHERE tc.constraint_type = 'FOREIGN KEY'
 **Filtro adicional sobre:** `employee.hiredate`
 
 ```sql
--- Escribir consulta aquí
+select s."name" as Turno,count( e.businessentityid) as Cantidad
+from humanresources.shift s
+inner join humanresources.employeedepartmenthistory edh
+on edh.shiftid = s.shiftid
+inner join humanresources.employee e
+on e.businessentityid = edh.businessentityid
+where e.hiredate >='2010-01-01'
+group by s."name"
+order by 2;
 ```
 
 ---
@@ -128,7 +145,12 @@ WHERE tc.constraint_type = 'FOREIGN KEY'
 **Campos sugeridos:** `person.firstname`, `person.lastname`, `employee.hiredate`, `AGE(CURRENT_DATE, employee.hiredate)`
 
 ```sql
--- Escribir consulta aquí
+select
+EXTRACT(year FROM AGE(current_date,e.hiredate )) as antiguedad
+,e.hiredate as "fecha_contratacion"
+from humanresources.employee e
+where EXTRACT(year FROM AGE(current_date,e.hiredate )) > 15
+order by 1 desc
 ```
 
 ---
@@ -141,7 +163,11 @@ WHERE tc.constraint_type = 'FOREIGN KEY'
 **Filtros adicionales sobre:** `vendor.activeflag`, `vendor.name`
 
 ```sql
--- Escribir consulta aquí
+select v.businessentityid , v."name" ,
+v.creditrating ,v.preferredvendorstatus
+from purchasing.vendor v
+where v.creditrating between 1 and 2
+and v."name"  like '%Bike%' or v."name" like '%Sport%'
 ```
 
 ---
@@ -192,3 +218,27 @@ WHERE tc.constraint_type = 'FOREIGN KEY'
 ```sql
 -- Escribir consulta aquí
 ```
+
+## Ejercicio 13
+
+El área de recursos humanos necesita saber cuántos empleados tiene cada departamento. Muestra el nombre del departamento, su grupo y la cantidad de empleados, considerando solo las asignaciones vigentes (`enddate IS NULL`) y departamentos con más de 5 empleados. Ordena por cantidad descendente y muestra únicamente los registros del 3° al 7°.
+
+**Tablas:** `humanresources.employeedepartmenthistory`, `humanresources.department`, `humanresources.employee`
+
+---
+
+## Ejercicio 14
+
+El área de abastecimiento necesita conocer el precio mínimo, máximo y promedio acordado con los proveedores por subcategoría de producto. Muestra el nombre del proveedor, la subcategoría y los tres precios. Considera solo proveedores activos con calificación de crédito menor o igual a 2. Ordena por subcategoría y precio promedio descendente.
+
+**Tablas:** `purchasing.vendor`, `purchasing.productvendor`, `production.product`, `production.productsubcategory`
+
+---
+
+## Ejercicio 15
+
+El equipo comercial necesita revisar las ventas del primer semestre de 2013. Muestra el nombre completo del cliente, el producto comprado, su categoría, el precio unitario de la línea y la segunda línea de la dirección de envío; si no tiene segunda línea registrada, mostrar 'Sin detalle'. Considera solo clientes personas naturales y productos con precio de lista mayor a 100.
+
+**Tablas:** `sales.salesorderheader`, `sales.salesorderdetail`, `sales.customer`, `person.person`, `person.address`, `production.product`, `production.productsubcategory`, `production.productcategory`
+
+---
