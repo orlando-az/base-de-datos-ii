@@ -1,6 +1,6 @@
 # Laboratorio — Consultas Multitabla sobre AdventureWorks
 
-**Nombre:** **********************\_\_\_**********************
+**Nombre:** **********\*\***********\_\_\_**********\*\***********
 
 ---
 
@@ -63,14 +63,6 @@ Para analizar la evolución del negocio, construye un reporte que muestre el tot
 El equipo de pricing quiere conocer la dispersión de precios reales de venta por categoría. Calcula el precio unitario mínimo, máximo y promedio de las líneas de detalle, considerando solo líneas con precio mayor a 0 y cantidad menor o igual a 10. Muestra únicamente las categorías con más de 100 líneas que cumplan esas condiciones.
 
 **Tablas:** `sales.salesorderdetail`, `production.product`, `production.productsubcategory`, `production.productcategory`
-
-## Ejercicio 11
-
-Se desea auditar el orden en que los clientes fueron realizando sus compras a lo largo del tiempo. Para cada orden de clientes cuyo apellido comience con 'S' o con 'M', muestra el nombre completo, el ID de orden, la fecha y un número que indique la posición cronológica de esa orden dentro del historial de ese cliente. Considera solo clientes registrados como personas naturales.
-
-**Tablas:** `sales.salesorderheader`, `sales.customer`, `person.person`
-
----
 
 ## Entregable
 
