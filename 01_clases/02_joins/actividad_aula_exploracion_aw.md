@@ -225,6 +225,19 @@ El área de recursos humanos necesita saber cuántos empleados tiene cada depart
 
 **Tablas:** `humanresources.employeedepartmenthistory`, `humanresources.department`, `humanresources.employee`
 
+```sql
+select d."name" as Departamento,
+d.groupname as Grupo,
+count(edh.businessentityid) as Empleados
+from humanresources.department d
+inner join humanresources.employeedepartmenthistory edh
+on edh.departmentid = d.departmentid
+where edh.enddate is null
+group by d."name", d.groupname
+having count(edh.businessentityid ) >5
+limit 5 offset 5
+```
+
 ---
 
 ## Ejercicio 14
@@ -233,6 +246,23 @@ El área de abastecimiento necesita conocer el precio mínimo, máximo y promedi
 
 **Tablas:** `purchasing.vendor`, `purchasing.productvendor`, `production.product`, `production.productsubcategory`
 
+```sql
+select v."name" as Vendedor
+, psc."name" as SubCategoria,
+Max(pv.standardprice) precio_maximo,
+MIN(pv.standardprice ) precio_minimo,
+round( AVG(pv.standardprice),2) precio_promedio
+from purchasing.vendor v
+inner join purchasing.productvendor pv on
+pv.businessentityid  = v.businessentityid
+inner join production.product p
+on p.productid = pv.productid
+inner join production.productsubcategory psc
+on psc.productsubcategoryid = p.productsubcategoryid
+where v.activeflag =true and v.creditrating <=2
+group by v."name" ,psc."name" ;
+```
+
 ---
 
 ## Ejercicio 15
@@ -240,5 +270,9 @@ El área de abastecimiento necesita conocer el precio mínimo, máximo y promedi
 El equipo comercial necesita revisar las ventas del primer semestre de 2013. Muestra el nombre completo del cliente, el producto comprado, su categoría, el precio unitario de la línea y la segunda línea de la dirección de envío; si no tiene segunda línea registrada, mostrar 'Sin detalle'. Considera solo clientes personas naturales y productos con precio de lista mayor a 100.
 
 **Tablas:** `sales.salesorderheader`, `sales.salesorderdetail`, `sales.customer`, `person.person`, `person.address`, `production.product`, `production.productsubcategory`, `production.productcategory`
+
+```sql
+-- Escribir consulta aquí
+```
 
 ---
