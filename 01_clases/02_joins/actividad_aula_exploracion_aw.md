@@ -276,3 +276,144 @@ El equipo comercial necesita revisar las ventas del primer semestre de 2013. Mue
 ```
 
 ---
+
+## Ejercicio 16
+
+Elabore un reporte que presente el monto total de ventas (`totaldue`) por territorio comercial, desagregado en columnas independientes correspondientes a los años 2012, 2013 y 2014.
+
+**Tablas:** `sales.salesorderheader`, `sales.salesterritory`
+
+```sql
+-- Escribir la consulta aquí
+```
+
+---
+
+## Objetivo de la sesión
+
+Comprender las funciones de ventana de ranking (`ROW_NUMBER`, `RANK`, `DENSE_RANK`), diferenciarlas entre sí y aplicarlas para resolver el problema de "Top N por grupo", que con agregación clásica no tiene solución directa en una sola pasada.
+
+---
+
+## 2. El límite de `GROUP BY`
+
+`GROUP BY` resuelve muy bien las agregaciones, pero tiene un límite: **colapsa** las filas de cada grupo en una sola. Eso hace que ciertos cálculos no se puedan resolver en una sola pasada, por ejemplo:
+
+- **Porcentaje sobre el total general** → necesita el total de todos los grupos (otro nivel de agregación) en la misma fila.
+- **Ranking** → necesita comparar cada fila con las demás del resultado ya agregado.
+- **Top N por grupo** → necesita ordenar y numerar dentro de cada grupo sin perder las filas.
+  Como `GROUP BY` "pierde de vista" al resto del grupo una vez que colapsa, para estos casos necesitamos otra herramienta: las **funciones de ventana**, que agregan y comparan **sin colapsar** las filas.
+
+---
+
+## 3. Funciones de ventana: el problema del "Top N por grupo"
+
+**Consigna de la sesión:** obtener los **3 productos más vendidos por cada subcategoría**.
+
+### Por qué no alcanza con `GROUP BY` + `LIMIT`
+
+`LIMIT` corta el resultado completo, no por grupo. Solo funciona si filtramos una subcategoría a la vez:
+
+```sql
+SELECT
+    p.name AS producto,
+    SUM(d.orderqty) AS cantidad_vendida
+FROM sales.salesorderdetail d
+INNER JOIN production.product p ON d.productid = p.productid
+INNER JOIN production.productsubcategory psc ON p.productsubcategoryid = psc.productsubcategoryid
+WHERE psc.name = 'Road Bikes'       -- solo una subcategoría
+GROUP BY p.name
+ORDER BY cantidad_vendida DESC
+LIMIT 3;
+```
+
+No escala: para 37 subcategorías necesitaríamos 37 consultas. Las funciones de ventana resuelven las 37 de una vez. Vamos a construir la solución por partes, en los siguientes ejercicios.
+
+---
+
+### Ejercicio 1 — La base que vamos a rankear
+
+Antes de rankear, necesitamos el dato sobre el cual se rankea. Calculá el **total de unidades vendidas por producto dentro de cada subcategoría**, ordenado para ver primero los más vendidos.
+
+> Esto todavía es agregación clásica. Cruzá `salesorderdetail` con `product` y `productsubcategory`, sumá `orderqty` y agrupá por subcategoría y producto. Sin funciones de ventana aún.
+
+```sql
+-- Escribir la consulta aquí
+```
+
+---
+
+### Ejercicio 2 — Numerar las filas
+
+Sobre la consulta anterior, agregá una columna que **numere los productos dentro de cada subcategoría**, del más vendido al menos vendido, asignando un número distinto a cada fila aunque dos productos vendan lo mismo.
+
+> Necesitás una función de ventana que asigne una numeración correlativa **sin repetir** valores. Pensá en `OVER (PARTITION BY ... ORDER BY ...)`: la partición reinicia el conteo en cada subcategoría y el orden define quién va primero. La cláusula `ORDER BY` dentro del `OVER` puede recibir directamente el `SUM(orderqty)`.
+
+```sql
+-- Escribir la consulta aquí
+```
+
+**Anatomía de `OVER()`:**
+
+- `PARTITION BY` → divide el resultado en grupos (como un `GROUP BY` que no colapsa).
+- `ORDER BY` → define el orden **dentro** de cada grupo, sobre el cual se asigna el número.
+
+---
+
+### Ejercicio 3 — Numerar respetando empates
+
+Ahora agregá, **junto a la columna anterior**, otra que también ordene de mayor a menor pero que asigne **el mismo número a los productos que vendan exactamente lo mismo**. Observá qué pasa con la numeración inmediatamente después de un empate.
+
+> Hay dos funciones que empatan; ésta es la que **salta** posiciones después del empate (por ejemplo `1, 2, 2, 4`). Mantené la columna del ejercicio anterior al lado para comparar.
+
+```sql
+-- Escribir la consulta aquí
+```
+
+---
+
+### Ejercicio 4 — Numerar sin huecos
+
+Sumá una **tercera columna** de ranking. Esta debe empatar igual que la anterior, pero **sin dejar huecos** en la numeración: después de un empate, el número siguiente continúa de forma consecutiva (por ejemplo `1, 2, 2, 3`).
+
+> Es la "hermana densa" de la función del ejercicio 3. Tené las tres columnas a la vista al mismo tiempo: en una fila con empate vas a ver claramente cómo cada una resuelve distinto.
+
+```sql
+-- Escribir la consulta aquí
+```
+
+Comparar las tres columnas lado a lado es el punto central del tema: cuando aparece un empate, la diferencia entre las funciones queda a la vista en la misma fila.
+
+---
+
+### Ejercicio 5 — Quedarnos solo con el Top 3
+
+Finalmente, filtrá el resultado para mostrar **únicamente los 3 primeros de cada subcategoría**.
+
+> Si intentás poner la condición del ranking en el `WHERE`, PostgreSQL te dará error — las funciones de ventana se calculan **después** del `WHERE`. La salida es envolver la consulta del ejercicio anterior dentro de otra (una **subconsulta**) y aplicar el filtro `<= 3` en la consulta externa, sobre el alias del ranking. Elegí la columna de ranking que mejor se ajuste a "los 3 mejores incluyendo empates".
+
+```sql
+-- Escribir la consulta aquí
+```
+
+---
+
+## 4. Resumen de diferencias
+
+| Función        | Empates      | Salto de posición | Secuencia ejemplo |
+| -------------- | ------------ | ----------------- | ----------------- |
+| `ROW_NUMBER()` | Nunca empata | No aplica         | 1, 2, 3, 4        |
+| `RANK()`       | Sí empata    | Sí salta          | 1, 2, 2, 4        |
+| `DENSE_RANK()` | Sí empata    | No salta          | 1, 2, 2, 3        |
+
+**¿Cuándo usar cada una?**
+
+- `ROW_NUMBER` → cuando se necesita exactamente N filas sin repetición (paginación, deduplicación).
+- `RANK` → rankings deportivos o comerciales donde el empate "ocupa" las posiciones siguientes.
+- `DENSE_RANK` → rankings donde se quiere continuidad numérica aunque haya empates.
+
+---
+
+## Cierre
+
+La diferencia entre `GROUP BY` y `PARTITION BY` es el concepto central de la sesión: ambos agrupan, pero `GROUP BY` colapsa las filas y `PARTITION BY` las conserva, permitiendo agregar y comparar sin perder el detalle. El "Top N por grupo" es el caso de uso que mejor muestra esta diferencia.
