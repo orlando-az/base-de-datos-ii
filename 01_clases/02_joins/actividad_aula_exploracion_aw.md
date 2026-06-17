@@ -174,12 +174,20 @@ and v."name"  like '%Bike%' or v."name" like '%Sport%'
 
 ### Ejercicio 9 — Productos con precio acordado superior a 500
 
-**Orden:** Mostrar el nombre del producto, el proveedor y el precio estándar acordado, únicamente para productos cuyo precio estándar sea mayor a 500.
+**Orden:** Mostrar el nombre del producto, el proveedor y el precio estándar acordado, únicamente para productos cuyo precio estándar sea mayor a 50.
 
 **Campos sugeridos:** `product.name`, `vendor.name`, `productvendor.standardprice`
 
 ```sql
--- Escribir consulta aquí
+SELECT
+    p.name             AS producto,
+    v.name             AS proveedor,
+    pv.standardprice   AS precio_estandar
+FROM purchasing.productvendor pv
+INNER JOIN production.product p ON pv.productid = p.productid
+INNER JOIN purchasing.vendor v  ON pv.businessentityid = v.businessentityid
+WHERE pv.standardprice > 50
+ORDER BY pv.standardprice DESC;
 ```
 
 ---
@@ -192,7 +200,17 @@ and v."name"  like '%Bike%' or v."name" like '%Sport%'
 **Filtro adicional sobre:** `purchaseorderheader.orderdate`
 
 ```sql
--- Escribir consulta aquí
+SELECT
+    v.name                  AS proveedor,
+    COUNT(*)                AS cantidad_ordenes,
+    SUM(poh.totaldue)       AS monto_total
+FROM purchasing.purchaseorderheader poh
+INNER JOIN purchasing.vendor v ON poh.vendorid = v.businessentityid
+WHERE poh.orderdate >= '2013-01-01'
+  AND poh.orderdate <  '2015-01-01'
+GROUP BY v.name
+HAVING COUNT(*) > 5
+ORDER BY monto_total DESC;
 ```
 
 ---
@@ -204,7 +222,17 @@ and v."name"  like '%Bike%' or v."name" like '%Sport%'
 **Campos sugeridos:** `productinventory.locationid`, `location.name`, `location.costrate`, `SUM(productinventory.quantity)`
 
 ```sql
--- Escribir consulta aquí
+SELECT
+    pi.locationid              AS ubicacion_id,
+    l.name                     AS ubicacion,
+    l.costrate                 AS costo,
+    SUM(pi.quantity)           AS total_inventario
+FROM production.productinventory pi
+INNER JOIN production.location l ON pi.locationid = l.locationid
+WHERE l.costrate > 0
+GROUP BY pi.locationid, l.name, l.costrate
+HAVING SUM(pi.quantity) > 5000
+ORDER BY total_inventario DESC;
 ```
 
 ---
@@ -216,7 +244,17 @@ and v."name"  like '%Bike%' or v."name" like '%Sport%'
 **Campos sugeridos:** `workorder.workorderid`, `product.name`, `workorder.orderqty`, `workorder.duedate`, `workorder.enddate`
 
 ```sql
--- Escribir consulta aquí
+SELECT
+    w.workorderid              AS orden_trabajo,
+    p.name                     AS producto,
+    w.orderqty                 AS cantidad,
+    w.duedate                  AS fecha_vencimiento,
+    w.enddate                  AS fecha_fin
+FROM production.workorder w
+INNER JOIN production.product p ON w.productid = p.productid
+WHERE w.enddate > w.duedate
+  AND w.orderqty > 20
+ORDER BY w.enddate DESC;
 ```
 
 ## Ejercicio 13
