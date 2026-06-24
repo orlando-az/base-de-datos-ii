@@ -227,7 +227,13 @@ ORDER BY diferencia DESC;
 El equipo de marketing necesita depurar su base de contactos. Obtén el nombre completo de las personas que tienen al menos una dirección de correo electrónico registrada en el sistema.
 
 ```sql
-
+select p.firstname || ' ' || p.lastname as nombrecompleto
+from person.person p
+where p.businessentityid
+in (
+select e.businessentityid
+from person.emailaddress e
+)
 ```
 
 ---
@@ -237,7 +243,18 @@ El equipo de marketing necesita depurar su base de contactos. Obtén el nombre c
 El área de inventario necesita identificar los productos que nunca han generado una venta para evaluar el stock inmovilizado. Obtén los productos que no aparecen en ningún detalle de venta, mostrando su nombre y la cantidad total disponible en inventario, ordenados de mayor a menor stock.
 
 ```sql
-
+select p."name" , sum( pi.quantity) as cantidad
+from production.product p
+inner join production.productinventory pi
+on p.productid = pi.productid
+where p.productid not in
+(
+select distinct sod.productid  from
+sales.salesorderdetail sod
+order by 1
+)
+group by p."name"
+order by 2 desc
 ```
 
 ---
@@ -247,7 +264,13 @@ El área de inventario necesita identificar los productos que nunca han generado
 La gerencia solicita un resumen del volumen de compra por cliente. Obtén el nombre completo de cada cliente junto al total gastado sumando el monto de todas sus órdenes, ordenados de mayor a menor.
 
 ```sql
-
+select p.firstname , p.lastname , ventas.customerid , ventas.total
+from(
+select soh.customerid , sum(soh.totaldue) as total
+from sales.salesorderheader as soh
+group by soh.customerid ) as ventas
+inner join sales.customer c on c.customerid = ventas.customerid
+inner join person.person p on p.businessentityid = c.personid
 ```
 
 ---
