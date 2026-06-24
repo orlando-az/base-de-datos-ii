@@ -179,11 +179,46 @@ Es la más poderosa pero también la más costosa en rendimiento. Para conjuntos
 
 A partir de ese mismo promedio, se requiere identificar los productos considerados por encima de la media. Obtén únicamente los productos cuyo precio de lista supere el precio promedio general del catálogo, ordenados del más caro al más económico.
 
+```sql
+SELECT
+    p.name,
+    p.listprice
+FROM production.product p
+WHERE p.listprice > (
+    SELECT AVG(listprice)
+    FROM production.product
+    WHERE listprice > 0
+)
+ORDER BY p.listprice DESC;
+```
+
 ---
 
 **Ejercicio 2**
 
 El área comercial necesita evaluar qué productos están por encima o por debajo del precio promedio del catálogo. Obtén el nombre, el precio de lista, el promedio general, la diferencia entre ambos y una clasificación que indique si el producto es "Superior" o "Menor" respecto al promedio. Considera únicamente productos con precio de lista mayor a cero, ordenados por la diferencia de mayor a menor.
+
+```sql
+SELECT
+    p.name,
+    p.listprice,
+    (SELECT ROUND(AVG(p2.listprice), 2)
+     FROM production.product p2
+     WHERE p2.listprice > 0) AS promedio_general,
+    p.listprice - (SELECT ROUND(AVG(p2.listprice), 2)
+                   FROM production.product p2
+                   WHERE p2.listprice > 0) AS diferencia,
+    CASE
+        WHEN p.listprice > (SELECT AVG(p2.listprice)
+                            FROM production.product p2
+                            WHERE p2.listprice > 0)
+        THEN 'Superior'
+        ELSE 'Menor'
+    END AS clasificacion
+FROM production.product p
+WHERE p.listprice > 0
+ORDER BY diferencia DESC;
+```
 
 ---
 
@@ -191,11 +226,19 @@ El área comercial necesita evaluar qué productos están por encima o por debaj
 
 El equipo de marketing necesita depurar su base de contactos. Obtén el nombre completo de las personas que tienen al menos una dirección de correo electrónico registrada en el sistema.
 
+```sql
+
+```
+
 ---
 
 **Ejercicio 4**
 
 El área de inventario necesita identificar los productos que nunca han generado una venta para evaluar el stock inmovilizado. Obtén los productos que no aparecen en ningún detalle de venta, mostrando su nombre y la cantidad total disponible en inventario, ordenados de mayor a menor stock.
+
+```sql
+
+```
 
 ---
 
@@ -203,8 +246,16 @@ El área de inventario necesita identificar los productos que nunca han generado
 
 La gerencia solicita un resumen del volumen de compra por cliente. Obtén el nombre completo de cada cliente junto al total gastado sumando el monto de todas sus órdenes, ordenados de mayor a menor.
 
+```sql
+
+```
+
 ---
 
 **Ejercicio 6**
 
 Se requiere medir el nivel de actividad de cada cliente dentro de la plataforma. Para cada cliente, obtén la cantidad de órdenes que ha realizado y lista los 20 clientes más activos.
+
+```sql
+
+```
