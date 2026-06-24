@@ -4,6 +4,16 @@
 
 ---
 
+```sql
+create view vw_producto as
+(
+select p.productid, p.name as producto
+from production.product p
+)
+
+select * from vw_producto vp
+```
+
 ## Ejercicio 1 — Una vista, muchas preguntas
 
 **Contexto:** El equipo comercial pregunta lo mismo de formas distintas ("ventas por producto", "los 10 que más venden", "los que superan cierto monto"). En lugar de reescribir el join y la agregación cada vez, encapsulá el cálculo una sola vez.
