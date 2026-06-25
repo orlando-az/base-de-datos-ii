@@ -39,6 +39,17 @@ FROM nombre_cte;    -- la consulta principal usa el CTE como si fuera una tabla
 La gerencia quiere ver la evolución de las ventas año a año. En un CTE, reunir las órdenes con el año extraído de su fecha y el monto de total de cada una. En la consulta principal, calcular el total de ventas de cada año, mostrando el año y el monto total, ordenado de mayor a menor.
 
 ```sql
+with detalle as(
+select
+extract(year from s.orderdate) as anio,
+extract(month from s.orderdate) as mes,
+s.totaldue as total
+from sales.salesorderheader s
+)
+select anio,mes, sum(total) as total_anual
+from detalle
+group by anio,mes
+order by total_anual desc
 
 ```
 
@@ -47,7 +58,25 @@ La gerencia quiere ver la evolución de las ventas año a año. En un CTE, reuni
 Recursos Humanos necesita un listado de los empleados que aún se encuentran activos (asignación vigente, sin fecha de finalización). En un CTE, reunir a esos empleados con su fecha de inicio; en la consulta principal, mostrar su identificador, la fecha de inicio y la cantidad de días trabajados hasta la fecha actual, ordenados de mayor a menor antigüedad.
 
 ```sql
-
+with antiguedad as (
+select e.businessentityid as id_empleado,
+	e.startdate as fecha_inicio,
+ e.enddate as fecha_fin
+from humanresources.employeedepartmenthistory e
+),
+datos as (
+select id_empleado,
+(current_date - fecha_inicio) as dias_antiguedad
+from antiguedad
+where fecha_fin is null
+)
+select datos.id_empleado,datos.dias_antiguedad,
+	case
+		when dias_antiguedad between 3000 and 4000 then 'Nuevos'
+		when dias_antiguedad between 4001 and 5000 then 'Regulares'
+		when dias_antiguedad > 5000 then 'Antiguos'
+	end
+from datos
 ```
 
 ## Ejercicio 3
