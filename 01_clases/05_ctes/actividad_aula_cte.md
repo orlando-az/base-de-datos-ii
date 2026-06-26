@@ -84,7 +84,20 @@ from datos
 Se quiere comparar el gasto de cada cliente contra el promedio general de gasto. En un primer CTE, calcular el monto total comprado por cada cliente (`totaldue` a nivel de orden). En un segundo CTE, calcular el promedio de esos montos entre todos los clientes. En la consulta principal, listar los clientes cuyo gasto total supere ese promedio, mostrando nombre completo y monto.
 
 ```sql
-
+with total_cliente as (
+	select s.customerid , p.firstname ,p.lastname , sum(s.totaldue)  as total
+	from sales.salesorderheader s
+	inner join sales.customer c on c.customerid = s.customerid
+	inner join person.person p on p.businessentityid= c.personid
+	group by s.customerid,p.firstname ,p.lastname
+),
+promedio_cliente as (
+ select Round(avg(s.totaldue ),3) as promedio
+ from sales.salesorderheader s
+)
+select total_cliente.firstname ,total_cliente.lastname  , total,promedio
+from total_cliente , promedio_cliente
+where total_cliente.total > promedio_cliente.promedio
 ```
 
 ## Ejercicio 4
