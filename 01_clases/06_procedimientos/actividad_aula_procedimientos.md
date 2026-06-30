@@ -56,7 +56,22 @@ SELECT setval(
 El área de catálogo necesita registrar nuevas ubicaciones de inventario sin escribir el INSERT manualmente cada vez. Crear un procedimiento que reciba el nombre de una ubicación y la registre en la tabla de ubicaciones de producción, mostrando al final un mensaje que confirme el registro.
 
 ```sql
+create or replace procedure production.registrar_ubicacion(
+	p_nombre text
+)
+language plpgsql
+as $$
+begin
+	insert into
+	production.location(name,costrate,availability,modifieddate)
+	values
+	(p_nombre,0,0,current_timestamp);
 
+	raise notice 'Registro de ubicacion: %',p_nombre;
+end;
+$$
+
+call production.registrar_ubicacion('Central Oruro');
 ```
 
 ## Ejercicio 2
@@ -64,7 +79,25 @@ El área de catálogo necesita registrar nuevas ubicaciones de inventario sin es
 Al registrar una ubicación, el equipo quiere conocer de inmediato el identificador que la base le asignó automáticamente. Crear un procedimiento que reciba el nombre de una ubicación, la inserte y capture el identificador generado, mostrándolo en un mensaje de confirmación.
 
 ```sql
+create or replace procedure production.registrar_ubicacion_id(
+	p_nombre text
+)
+language plpgsql
+as $$
+declare
+	v_id int;
+begin
+	insert into
+	production.location(name,costrate,availability,modifieddate)
+	values(p_nombre,0,0,current_timestamp)
+	returning locationid into v_id;
 
+	raise notice
+	'Registro de ubicacion: % , con el ID: %',p_nombre,v_id;
+end;
+$$
+
+call production.registrar_ubicacion_id('Central Pando')
 ```
 
 ## Ejercicio 3
