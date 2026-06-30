@@ -139,5 +139,34 @@ call production.actualizar_costo(62,800)
 El procedimiento de actualización de costo debe protegerse ante valores inválidos. Crear un procedimiento que reciba el identificador de una ubicación y un nuevo costo, y que rechace la operación cuando el costo sea negativo, lanzando un error controlado con un mensaje claro. Además, capturar cualquier otro error inesperado mediante manejo de excepciones, informando que la operación no pudo completarse.
 
 ```sql
+CREATE OR REPLACE PROCEDURE production.actualizar_costo_seguro(
+    p_id INTEGER,
+    p_costo NUMERIC
+)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    -- Validación de regla de negocio
+    IF p_costo < 0 THEN
+        RAISE EXCEPTION 'El costo no puede ser negativo (valor recibido: %).', p_costo;
+    END IF;
 
+    UPDATE production.location
+    SET costrate = p_costo,
+        modifieddate = CURRENT_TIMESTAMP
+    WHERE locationid = p_id;
+
+    IF NOT FOUND THEN
+        RAISE NOTICE 'No se encontró la ubicación con ID %.', p_id;
+    ELSE
+        RAISE NOTICE 'Costo de la ubicación % actualizado a %.', p_id, p_costo;
+    END IF;
+
+EXCEPTION
+    WHEN raise_exception THEN
+        RAISE NOTICE 'Operación rechazada: %', SQLERRM;
+    WHEN OTHERS THEN
+        RAISE NOTICE 'Error inesperado: la operación no pudo completarse (%).', SQLERRM;
+END;
+$$;
 ```
