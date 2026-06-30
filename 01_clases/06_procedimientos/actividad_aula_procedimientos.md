@@ -105,7 +105,33 @@ call production.registrar_ubicacion_id('Central Pando')
 El área de producción necesita actualizar el costo estándar de una ubicación de inventario, pero solo si la ubicación existe. Crear un procedimiento que reciba el identificador de una ubicación y un nuevo costo: si la ubicación existe, actualizar su costo y mostrar un mensaje de éxito; si no existe, mostrar un mensaje indicando que no se encontró.
 
 ```sql
+create or replace procedure production.actualizar_costo(
+	p_ubicacion_id int,
+	p_costo numeric
+)
+language plpgsql
+as $$
+declare
+	v_existe int;
+begin
 
+	select count(*) into v_existe
+	from production.location l
+	where l.locationid=p_ubicacion_id;
+
+	if v_existe > 0 then
+		update production.location
+		set costrate=p_costo, modifieddate=current_timestamp
+		where locationid=p_ubicacion_id;
+
+	raise notice 'Ubicacion actualizada costo: %', p_costo;
+	else
+	raise notice 'Ubicacion no encontrada con ID: %', p_ubicacion_id;
+	end if;
+end;
+$$
+
+call production.actualizar_costo(62,800)
 ```
 
 ## Ejercicio 4
