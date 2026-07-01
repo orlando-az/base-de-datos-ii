@@ -113,5 +113,36 @@ El área de adquisiciones consulta seguido "los productos de tal categoría más
 Crear una función que reciba una categoría de producto y un año y devuelva una tabla con los productos de esa categoría y la cantidad vendida en ese año, ordenada de mayor a menor. Luego, demostrar su uso invocándola para dos categorías distintas.
 
 ```sql
+create or replace function production.cantida_producto(
+	p_categoria text,
+	p_anio int
+)
+returns table(
+	nombre_producto text,
+	cantidad int
+)
+language plpgsql
+as $$
+begin
+	return query
+	 select
+	p."name"::text,
+	sum(sod.orderqty )::int
+	from production.product p
+	inner join sales.salesorderdetail sod
+	on p.productid = sod.productid
+	inner join production.productsubcategory psc
+	on p.productsubcategoryid = psc.productsubcategoryid
+	inner join production.productcategory pc
+	on psc.productcategoryid = pc.productcategoryid
+	inner join sales.salesorderheader soh
+	on soh.salesorderid= sod.salesorderid
+	where pc."name" = p_categoria and
+		extract(year from soh.orderdate)=p_anio
+	group by p."name";
+end;
+$$
 
+
+select production.cantida_producto('Bikes',2013)
 ```
