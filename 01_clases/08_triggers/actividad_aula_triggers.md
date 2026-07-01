@@ -49,7 +49,27 @@ El área de producción quiere asegurarse de que ninguna ubicación de inventari
 Crear una función de trigger que, antes de insertar o actualizar un registro en `production.location`, verifique si `costrate` es menor que 0 y, en ese caso, lo ajuste automáticamente a 0. Luego, crear el trigger que ejecute esta función en cada fila.
 
 ```sql
+create or replace function production.validar_costo()
+returns trigger
+language plpgsql
+as $$
+	begin
+		if new.costrate <0 then
+			new.costrate := 0;
+		end if;
+		return new;
+	end;
+$$
 
+create trigger tg_validar_costo
+before insert or update on production.location
+for each row
+execute function production.validar_costo()
+
+insert into production."location" (name,costrate ,availability,modifieddate)
+values('prueba ubicacion',-15,0,current_timestamp)
+
+update production."location"  set costrate = -15 where locationid=10
 ```
 
 ## Ejercicio 2
