@@ -79,7 +79,28 @@ El equipo de calidad de datos quiere impedir que se registre una ubicación sin 
 Crear una función de trigger que, antes de insertar un registro en `production.location`, verifique si el campo `name` es nulo o está vacío y, en ese caso, impida la inserción lanzando un error con un mensaje claro. Luego, crear el trigger correspondiente.
 
 ```sql
+create or replace function production.validar_nombre()
+returns trigger
+language plpgsql
+as $$
+begin
+	if new.name is null or trim(new.name) = '' then
+	 raise exception 'El nombre de la ubicacion no puede estar vacio';
+	end if;
 
+	return new;
+end;
+$$
+
+create trigger tg_validar_nombre
+before insert or update on production.location
+for each row
+execute function production.validar_nombre()
+
+insert into production."location" (name,costrate,availability,modifieddate)
+values('',150,0,current_timestamp)
+
+select * from production."location" l
 ```
 
 ## Ejercicio 3
